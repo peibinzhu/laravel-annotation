@@ -16,6 +16,10 @@ class Scanner
     public function __construct(ScanConfig $scanConfig)
     {
         $this->scanConfig = $scanConfig;
+
+        foreach ($scanConfig->getIgnoreAnnotations() as $annotation) {
+            AnnotationReader::addGlobalIgnoredName($annotation);
+        }
     }
 
     /**

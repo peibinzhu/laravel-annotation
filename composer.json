@@ -15,10 +15,9 @@
   ],
   "require": {
     "php": ">=8.0",
-    "nikic/php-parser": "^4.1",
-    "doctrine/annotations": "^1.13",
     "laravel/framework": "^9.2",
-    "php-di/phpdoc-reader": "^2.2"
+    "nikic/php-parser": "^4.1",
+    "peibin/laravel-utils": "^1.2"
   },
   "autoload": {
     "psr-4": {

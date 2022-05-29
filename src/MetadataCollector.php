@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PeibinLaravel\Di\Annotation;
+namespace PeibinLaravel\Di;
 
 use Illuminate\Support\Arr;
 use PeibinLaravel\Di\Contracts\MetadataCollector as MetadataCollectorContract;
@@ -13,12 +13,12 @@ abstract class MetadataCollector implements MetadataCollectorContract
      * Subclass MUST override this property.
      * @var array
      */
-    protected static $container = [];
+    protected static array $container = [];
 
     /**
      * Retrieve the metadata via key.
      * @param string $key
-     * @param        $default
+     * @param mixed  $default
      * @return mixed
      */
     public static function get(string $key, $default = null): mixed
@@ -31,7 +31,7 @@ abstract class MetadataCollector implements MetadataCollectorContract
      * @param string $key
      * @param mixed  $value
      */
-    public static function set(string $key, mixed $value): void
+    public static function set(string $key, $value): void
     {
         Arr::set(static::$container, $key, $value);
     }
@@ -48,7 +48,6 @@ abstract class MetadataCollector implements MetadataCollectorContract
     /**
      * Clear the metadata via key.
      * @param string|null $key
-     * @return void
      */
     public static function clear(?string $key = null): void
     {
@@ -69,6 +68,8 @@ abstract class MetadataCollector implements MetadataCollectorContract
 
     /**
      * Deserialize the serialized metadata and set the metadata to holder.
+     * @param string $metadata
+     * @return bool
      */
     public static function deserialize(string $metadata): bool
     {
@@ -76,6 +77,10 @@ abstract class MetadataCollector implements MetadataCollectorContract
         return true;
     }
 
+    /**
+     * Return all metadata array.
+     * @return array
+     */
     public static function list(): array
     {
         return static::$container;

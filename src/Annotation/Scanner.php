@@ -4,36 +4,49 @@ declare(strict_types=1);
 
 namespace PeibinLaravel\Di\Annotation;
 
+use Illuminate\Filesystem\Filesystem;
 use PeibinLaravel\Di\Contracts\Annotation;
+use PeibinLaravel\Di\Contracts\ScanHandler;
 use PeibinLaravel\Di\Exception\DirectoryNotExistException;
+use PeibinLaravel\Di\MetadataCollector;
+use PeibinLaravel\Di\ReflectionManager;
 use ReflectionClass;
 
 class Scanner
 {
-    /** @var ScanConfig */
-    private $scanConfig;
+    protected Filesystem $filesystem;
 
-    public function __construct(ScanConfig $scanConfig)
-    {
-        $this->scanConfig = $scanConfig;
-
-        foreach ($scanConfig->getIgnoreAnnotations() as $annotation) {
-            AnnotationReader::addGlobalIgnoredName($annotation);
-        }
-    }
+    protected string $path;
 
     /**
-     * @return array|void
-     * @throws DirectoryNotExistException
+     * @param ScanConfig  $scanConfig
+     * @param ScanHandler $handler
      */
+    public function __construct(protected ScanConfig $scanConfig, protected ScanHandler $handler)
+    {
+        $this->filesystem = new Filesystem();
+        $this->path = storage_path('app/scan.cache');
+    }
+
     public function scan()
     {
         $paths = $this->scanConfig->getPaths();
         $collectors = $this->scanConfig->getCollectors();
-
         if (!$paths) {
             return [];
         }
+
+        $lastCacheModified = file_exists($this->path) ? $this->filesystem->lastModified($this->path) : 0;
+        if ($lastCacheModified > 0 && $this->scanConfig->isCacheable()) {
+            return $this->deserializeCachedScanData($collectors);
+        }
+
+        $scanned = $this->handler->scan();
+        if ($scanned->isScanned()) {
+            return $this->deserializeCachedScanData($collectors);
+        }
+
+        $this->deserializeCachedScanData($collectors);
 
         $annotationReader = new AnnotationReader();
 
@@ -42,16 +55,27 @@ class Scanner
         $classes = ReflectionManager::getAllClasses($paths);
 
         foreach ($classes as $className => $reflectionClass) {
-            /** @var MetadataCollector $collector */
-            foreach ($collectors as $collector) {
-                $collector::clear($className);
-            }
+            if ($this->filesystem->lastModified($reflectionClass->getFileName()) >= $lastCacheModified) {
+                /** @var MetadataCollector $collector */
+                foreach ($collectors as $collector) {
+                    $collector::clear($className);
+                }
 
-            $this->collect($annotationReader, $reflectionClass);
+                $this->collect($annotationReader, $reflectionClass);
+            }
         }
+
+        $data = [];
+        /** @var MetadataCollector|string $collector */
+        foreach ($collectors as $collector) {
+            $data[$collector] = $collector::serialize();
+        }
+
+        $this->putCache($this->path, serialize([$data]));
+        exit;
     }
 
-    public function collect(AnnotationReader $reader, ReflectionClass $reflection)
+    public function collect(AnnotationReader $reader, ReflectionClass $reflection): void
     {
         $className = $reflection->getName();
         if ($path = $this->scanConfig->getClassMap()[$className] ?? null) {
@@ -60,7 +84,8 @@ class Scanner
                 return;
             }
         }
-        // Parse class annotations
+
+        // Parse class annotations.
         $classAnnotations = $reader->getClassAnnotations($reflection);
         if (!empty($classAnnotations)) {
             foreach ($classAnnotations as $classAnnotation) {
@@ -69,7 +94,8 @@ class Scanner
                 }
             }
         }
-        // Parse properties annotations
+
+        // Parse properties annotations.
         $properties = $reflection->getProperties();
         foreach ($properties as $property) {
             $propertyAnnotations = $reader->getPropertyAnnotations($property);
@@ -81,7 +107,8 @@ class Scanner
                 }
             }
         }
-        // Parse methods annotations
+
+        // Parse methods annotations.
         $methods = $reflection->getMethods();
         foreach ($methods as $method) {
             $methodAnnotations = $reader->getMethodAnnotations($method);
@@ -111,9 +138,35 @@ class Scanner
         }
 
         if ($paths && !$result) {
-            throw new DirectoryNotExistException('The scanned directory does not exist');
+            throw new DirectoryNotExistException('The scanned directory does not exist.');
         }
 
         return $result;
+    }
+
+    protected function deserializeCachedScanData(array $collectors): array
+    {
+        if (!file_exists($this->path)) {
+            return [];
+        }
+
+        [$data] = unserialize(file_get_contents($this->path));
+        foreach ($data as $collector => $deserialized) {
+            /** @var MetadataCollector $collector */
+            if (in_array($collector, $collectors)) {
+                $collector::deserialize($deserialized);
+            }
+        }
+
+        return $data;
+    }
+
+    protected function putCache(string $path, $data): void
+    {
+        if (!$this->filesystem->isDirectory($dir = dirname($path))) {
+            $this->filesystem->makeDirectory($dir, 0755, true);
+        }
+
+        $this->filesystem->put($path, $data);
     }
 }

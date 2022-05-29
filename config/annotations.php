@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 return [
-    'scan' => [
-        'cacheable'          => false,
+    'scan'           => [
         'paths'              => [],
         'ignore_annotations' => [
             'mixin',
         ],
     ],
+    'scan_cacheable' => false,
 ];

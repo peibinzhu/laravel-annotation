@@ -8,11 +8,11 @@ interface MetadataCollector
 {
     /**
      * Retrieve the metadata via key.
-     * @param string     $key
-     * @param mixed|null $default
+     * @param string $key
+     * @param mixed  $default
      * @return mixed
      */
-    public static function get(string $key, mixed $default = null): mixed;
+    public static function get(string $key, mixed $default = null);
 
     /**
      * Set the metadata to holder.
@@ -24,7 +24,6 @@ interface MetadataCollector
     /**
      * Clear the metadata via key.
      * @param string|null $key
-     * @return void
      */
     public static function clear(?string $key = null): void;
 
@@ -35,11 +34,14 @@ interface MetadataCollector
 
     /**
      * Deserialize the serialized metadata and set the metadata to holder.
+     * @param string $metadata
+     * @return bool
      */
     public static function deserialize(string $metadata): bool;
 
     /**
      * Return all metadata array.
+     * @return array
      */
     public static function list(): array;
 }

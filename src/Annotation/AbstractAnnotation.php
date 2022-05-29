@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace PeibinLaravel\Di\Annotation;
 
-use PeibinLaravel\Di\Contracts\Annotation as AnnotationContract;
+use Illuminate\Contracts\Support\Arrayable;
+use PeibinLaravel\Di\Contracts\Annotation;
+use PeibinLaravel\Di\ReflectionManager;
 use ReflectionProperty;
 
-abstract class AbstractAnnotation implements AnnotationContract
+abstract class AbstractAnnotation implements Annotation, Arrayable
 {
     public function __construct(...$value)
     {

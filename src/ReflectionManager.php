@@ -2,14 +2,10 @@
 
 declare(strict_types=1);
 
-namespace PeibinLaravel\Di\Annotation;
+namespace PeibinLaravel\Di;
 
 use InvalidArgumentException;
-use PhpParser\Node\Stmt\Class_;
-use PhpParser\Node\Stmt\Interface_;
-use PhpParser\Node\Stmt\Namespace_;
-use PhpParser\Parser\Php7;
-use PhpParser\ParserFactory;
+use PeibinLaravel\Di\Aop\Ast;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
@@ -17,8 +13,7 @@ use Symfony\Component\Finder\Finder;
 
 class ReflectionManager extends MetadataCollector
 {
-    /** @var array */
-    protected static $container = [];
+    protected static array $container = [];
 
     public static function reflectClass(string $className): ReflectionClass
     {
@@ -93,39 +88,20 @@ class ReflectionManager extends MetadataCollector
     {
         $finder = new Finder();
         $finder->files()->in($paths)->name('*.php');
-
-        /** @var Php7 $parser */
-        $parser = (new ParserFactory())->create(ParserFactory::ONLY_PHP7);
+        $parser = new Ast();
 
         $reflectionClasses = [];
         foreach ($finder as $file) {
             try {
                 $stmts = $parser->parse($file->getContents());
-                if (!$className = self::parseClassByStmts($stmts)) {
+                if (!$className = $parser->parseClassByStmts($stmts)) {
                     continue;
                 }
                 $reflectionClasses[$className] = static::reflectClass($className);
-            } catch (\Throwable $e) {
+            } catch (\ThrPeibinLaravelowable) {
             }
         }
         return $reflectionClasses;
-    }
-
-    public static function parseClassByStmts(array $stmts): string
-    {
-        $namespace = $className = '';
-        foreach ($stmts as $stmt) {
-            if ($stmt instanceof Namespace_ && $stmt->name) {
-                $namespace = $stmt->name->toString();
-                foreach ($stmt->stmts as $node) {
-                    if (($node instanceof Class_ || $node instanceof Interface_) && $node->name) {
-                        $className = $node->name->toString();
-                        break;
-                    }
-                }
-            }
-        }
-        return ($namespace && $className) ? $namespace . '\\' . $className : '';
     }
 
     public static function getContainer(): array

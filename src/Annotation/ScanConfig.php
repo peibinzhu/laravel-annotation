@@ -4,92 +4,33 @@ declare(strict_types=1);
 
 namespace PeibinLaravel\Di\Annotation;
 
+use Illuminate\Contracts\Config\Repository;
+use Illuminate\Contracts\Foundation\Application;
+
 class ScanConfig
 {
-    /**
-     * @var bool
-     */
-    private $cacheable;
+    private static ?ScanConfig $instance = null;
 
     /**
-     * @var array
+     * @param bool   $cacheable
+     * @param string $configDir
+     * @param array  $paths The paths should be scanned everytime.
+     * @param array  $dependencies
+     * @param array  $ignoreAnnotations
+     * @param array  $globalImports
+     * @param array  $collectors
+     * @param array  $classMap
      */
-    private $config;
-
-    /**
-     * The paths should be scaned everytime.
-     *
-     * @var array
-     */
-    private $paths;
-
-    /**
-     * @var array
-     */
-    private $collectors;
-
-    /**
-     * @var array
-     */
-    private $ignoreAnnotations;
-
-    /**
-     * @var array
-     */
-    private $globalImports;
-
-    /**
-     * @var array
-     */
-    private $dependencies;
-
-    /**
-     * @var array
-     */
-    private $classMap;
-
-    /**
-     * @var null|ScanConfig
-     */
-    private static $instance;
-
     public function __construct(
-        bool $cacheable,
-        array $config,
-        array $paths = [],
-        array $dependencies = [],
-        array $ignoreAnnotations = [],
-        array $globalImports = [],
-        array $collectors = [],
-        array $classMap = []
+        private bool $cacheable,
+        private string $configDir,
+        private array $paths = [],
+        private array $dependencies = [],
+        private array $ignoreAnnotations = [],
+        private array $globalImports = [],
+        private array $collectors = [],
+        private array $classMap = []
     ) {
-        $this->cacheable = $cacheable;
-        $this->config = $config;
-        $this->paths = $paths;
-        $this->dependencies = $dependencies;
-        $this->ignoreAnnotations = $ignoreAnnotations;
-        $this->globalImports = $globalImports;
-        $this->collectors = $collectors;
-        $this->classMap = $classMap;
-    }
-
-    public static function instance(?array $config): self
-    {
-        if (self::$instance) {
-            return self::$instance;
-        }
-
-        $config = $config['scan'] ?? [];
-        return self::$instance = new self(
-            $config['cacheable'] ?? false,
-            $config,
-            $config['paths'] ?? [],
-            [],
-            $config['ignore_annotations'] ?? [],
-            $config['global_imports'] ?? [],
-            $config['collectors'] ?? [],
-            $config['class_map'] ?? []
-        );
     }
 
     public function isCacheable(): bool
@@ -97,9 +38,9 @@ class ScanConfig
         return $this->cacheable;
     }
 
-    public function getConfig(): array
+    public function getConfigDir(): string
     {
-        return $this->config;
+        return $this->configDir;
     }
 
     public function getPaths(): array
@@ -130,5 +71,62 @@ class ScanConfig
     public function getClassMap(): array
     {
         return $this->classMap;
+    }
+
+    public static function instance(Application $app): self
+    {
+        if (self::$instance) {
+            return self::$instance;
+        }
+
+        $configDir = rtrim($app->configPath(), '/');
+
+        [$config, $serverDependencies, $cacheable] = static::initConfig($app);
+
+        return self::$instance = new self(
+            $cacheable,
+            $configDir,
+            $config['paths'] ?? [],
+            $serverDependencies ?? [],
+            $config['ignore_annotations'] ?? [],
+            $config['global_imports'] ?? [],
+            $config['collectors'] ?? [],
+            $config['class_map'] ?? []
+        );
+    }
+
+    private static function initConfig(Application $app): array
+    {
+        $config = [];
+
+        $configFromProviders = $app->get(Repository::class)->all();
+
+        $serverDependencies = $configFromProviders['dependencies'] ?? [];
+
+        $annotationConfig = $configFromProviders['annotations'] ?? [];
+
+        $config = static::allocateConfigValue($annotationConfig, $config);
+
+        $cacheable = value($annotationConfig['scan_cacheable'] ?? $app->environment() == 'production');
+
+        return [$config, $serverDependencies, $cacheable];
+    }
+
+    private static function allocateConfigValue(array $content, array $config): array
+    {
+        if (!isset($content['scan'])) {
+            return [];
+        }
+
+        foreach ($content['scan'] as $key => $value) {
+            if (!isset($config[$key])) {
+                $config[$key] = [];
+            }
+            if (!is_array($value)) {
+                $value = [$value];
+            }
+            $config[$key] = array_merge($config[$key], $value);
+        }
+        return $config;
     }
 }

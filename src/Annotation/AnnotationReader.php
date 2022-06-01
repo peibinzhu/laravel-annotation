@@ -88,7 +88,6 @@ class AnnotationReader
                     $className = $reflection->getDeclaringClass()->getName();
                     $propertyName = $reflection->getName();
                 }
-
                 $message = sprintf(
                     "No attribute class found for '%s' in %s",
                     $attribute->getName(),
@@ -100,6 +99,7 @@ class AnnotationReader
                 if ($propertyName) {
                     $message .= sprintf('::$%s property', $propertyName);
                 }
+
                 throw new NotFoundException($message);
             }
             $result[] = $attribute->newInstance();

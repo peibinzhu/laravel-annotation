@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PeibinLaravel\Di\Annotation;
 
+use Illuminate\Container\Container;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Foundation\Application;
 
@@ -99,7 +100,7 @@ class ScanConfig
     {
         $config = [];
 
-        $configFromProviders = $app->get(Repository::class)->all();
+        $configFromProviders = Container::getInstance()->get(Repository::class)->all();
 
         $serverDependencies = $configFromProviders['dependencies'] ?? [];
 

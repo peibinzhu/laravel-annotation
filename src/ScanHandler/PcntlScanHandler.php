@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace PeibinLaravel\Di\ScanHandler;
 
-use Hyperf\Di\Exception\Exception;
 use PeibinLaravel\Di\Contracts\ScanHandler;
+use PeibinLaravel\Di\Exception\Exception;
 
 class PcntlScanHandler implements ScanHandler
 {

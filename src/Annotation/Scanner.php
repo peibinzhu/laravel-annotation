@@ -25,7 +25,7 @@ class Scanner
     public function __construct(protected ScanConfig $scanConfig, protected ScanHandler $handler)
     {
         $this->filesystem = new Filesystem();
-        $this->path = storage_path('app/scan.cache');
+        $this->path = base_path('runtime/container/scan.cache');
     }
 
     public function scan()

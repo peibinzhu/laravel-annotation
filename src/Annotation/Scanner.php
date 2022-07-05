@@ -54,6 +54,8 @@ class Scanner
 
         $classes = ReflectionManager::getAllClasses($paths);
 
+        $this->clearRemovedClasses($collectors, $classes);
+
         foreach ($classes as $className => $reflectionClass) {
             if ($this->filesystem->lastModified($reflectionClass->getFileName()) >= $lastCacheModified) {
                 /** @var MetadataCollector $collector */
@@ -159,6 +161,31 @@ class Scanner
         }
 
         return $data;
+    }
+
+    /**
+     * @param MetadataCollector[] $collectors
+     * @param ReflectionClass[]   $reflections
+     */
+    protected function clearRemovedClasses(array $collectors, array $reflections): void
+    {
+        $path = base_path('runtime/container/classes.cache');
+        $classes = array_keys($reflections);
+
+        $data = [];
+        if ($this->filesystem->exists($path)) {
+            $data = unserialize($this->filesystem->get($path));
+        }
+
+        $this->putCache($path, serialize($classes));
+
+        $removed = array_diff($data, $classes);
+
+        foreach ($removed as $class) {
+            foreach ($collectors as $collector) {
+                $collector::clear($class);
+            }
+        }
     }
 
     protected function putCache(string $path, $data): void

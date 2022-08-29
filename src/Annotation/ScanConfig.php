@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace PeibinLaravel\Di\Annotation;
 
-use Illuminate\Container\Container;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Foundation\Application;
 
@@ -74,15 +73,15 @@ class ScanConfig
         return $this->classMap;
     }
 
-    public static function instance(Application $app): self
+    public static function instance(Application $container): self
     {
         if (self::$instance) {
             return self::$instance;
         }
 
-        $configDir = rtrim($app->configPath(), '/');
+        $configDir = rtrim($container->configPath(), '/');
 
-        [$config, $serverDependencies, $cacheable] = static::initConfig($app);
+        [$config, $serverDependencies, $cacheable] = static::initConfig($container);
 
         return self::$instance = new self(
             $cacheable,
@@ -96,11 +95,11 @@ class ScanConfig
         );
     }
 
-    private static function initConfig(Application $app): array
+    private static function initConfig(Application $container): array
     {
         $config = [];
 
-        $configFromProviders = Container::getInstance()->get(Repository::class)->all();
+        $configFromProviders = $container->get(Repository::class)->all();
 
         $serverDependencies = $configFromProviders['dependencies'] ?? [];
 
@@ -108,7 +107,7 @@ class ScanConfig
 
         $config = static::allocateConfigValue($annotationConfig, $config);
 
-        $cacheable = value($annotationConfig['scan_cacheable'] ?? $app->environment() == 'production');
+        $cacheable = value($annotationConfig['scan_cacheable'] ?? $container->environment() == 'production');
 
         return [$config, $serverDependencies, $cacheable];
     }

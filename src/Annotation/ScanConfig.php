@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace PeibinLaravel\Di\Annotation;
 
-use Illuminate\Contracts\Config\Repository;
-use Illuminate\Contracts\Foundation\Application;
+use PeibinLaravel\ProviderConfig\ProviderConfig;
 
 class ScanConfig
 {
@@ -73,19 +72,17 @@ class ScanConfig
         return $this->classMap;
     }
 
-    public static function instance(Application $container): self
+    public static function instance(string $environment, bool $scanCacheable = false): self
     {
         if (self::$instance) {
             return self::$instance;
         }
 
-        $configDir = rtrim($container->configPath(), '/');
-
-        [$config, $serverDependencies, $cacheable] = static::initConfig($container);
+        [$config, $serverDependencies, $cacheable] = static::initConfig($environment, $scanCacheable);
 
         return self::$instance = new self(
             $cacheable,
-            $configDir,
+            config_path(),
             $config['paths'] ?? [],
             $serverDependencies ?? [],
             $config['ignore_annotations'] ?? [],
@@ -95,21 +92,28 @@ class ScanConfig
         );
     }
 
-    private static function initConfig(Application $container): array
+    private static function initConfig(string $environment, bool $scanCacheable = false): array
     {
         $config = [];
-
-        $configFromProviders = $container->get(Repository::class)->all();
+        $configFromProviders = ProviderConfig::load();
+        $cacheable = false;
 
         $serverDependencies = $configFromProviders['dependencies'] ?? [];
+        if (file_exists(config_path('dependencies.php'))) {
+            $definitions = include config_path('dependencies.php');
+            $serverDependencies = array_replace($serverDependencies, $definitions ?? []);
+        }
 
-        $annotationConfig = $configFromProviders['annotations'] ?? [];
+        $config = static::allocateConfigValue($configFromProviders['annotations'] ?? [], $config);
 
-        $config = static::allocateConfigValue($annotationConfig, $config);
+        // Load the config/annotations.php and merge the config
+        if (file_exists(config_path('annotations.php'))) {
+            $annotations = include config_path('annotations.php');
+            $config = static::allocateConfigValue($annotations, $config);
+            $cacheable = value($annotations['scan_cacheable'] ?? $environment == 'production');
+        }
 
-        $cacheable = value($annotationConfig['scan_cacheable'] ?? $container->environment() == 'production');
-
-        return [$config, $serverDependencies, $cacheable];
+        return [$config, $serverDependencies, $scanCacheable || $cacheable];
     }
 
     private static function allocateConfigValue(array $content, array $config): array

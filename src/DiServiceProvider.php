@@ -6,12 +6,10 @@ namespace PeibinLaravel\Di;
 
 use Illuminate\Support\ServiceProvider;
 use PeibinLaravel\Di\Annotation\AnnotationCollector;
-use PeibinLaravel\Utils\Providers\RegisterProviderConfig;
+use PeibinLaravel\ProviderConfig\Contracts\ProviderConfigInterface;
 
-class DiServiceProvider extends ServiceProvider
+class DiServiceProvider extends ServiceProvider implements ProviderConfigInterface
 {
-    use RegisterProviderConfig;
-
     public function __invoke(): array
     {
         return [

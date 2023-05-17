@@ -4,6 +4,7 @@
   "license": "MIT",
   "keywords": [
     "php",
+    "swoole",
     "laravel",
     "annotation"
   ],
@@ -16,8 +17,7 @@
   "require": {
     "php": ">=8.0",
     "laravel/framework": "^9.2",
-    "nikic/php-parser": "^4.1",
-    "peibin/laravel-provider-config": "^1.0"
+    "nikic/php-parser": "^4.1"
   },
   "autoload": {
     "psr-4": {

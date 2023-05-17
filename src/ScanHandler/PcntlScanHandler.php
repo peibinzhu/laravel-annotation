@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace PeibinLaravel\Di\ScanHandler;
 
-use PeibinLaravel\Di\Contracts\ScanHandler;
-use PeibinLaravel\Di\Exception\Exception;
+use PeibinLaravel\Di\Contracts\ScanHandlerInterface;
+use PeibinLaravel\Di\Exceptions\Exception;
 
-class PcntlScanHandler implements ScanHandler
+class PcntlScanHandler implements ScanHandlerInterface
 {
     public function __construct()
     {

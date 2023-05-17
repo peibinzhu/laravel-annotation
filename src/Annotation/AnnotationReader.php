@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PeibinLaravel\Di\Annotation;
 
-use PeibinLaravel\Di\Exception\NotFoundException;
+use PeibinLaravel\Di\Exceptions\NotFoundException;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;

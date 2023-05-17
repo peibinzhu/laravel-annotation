@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace PeibinLaravel\Di\Annotation;
 
-use PeibinLaravel\ProviderConfig\ProviderConfig;
+use Illuminate\Container\Container;
+use Illuminate\Contracts\Config\Repository;
 
 class ScanConfig
 {
@@ -95,21 +96,14 @@ class ScanConfig
     private static function initConfig(string $environment, bool $scanCacheable = false): array
     {
         $config = [];
-        $configFromProviders = ProviderConfig::load();
+        $configItems = Container::getInstance()->get(Repository::class)->all();
         $cacheable = false;
 
-        $serverDependencies = $configFromProviders['dependencies'] ?? [];
-        if (file_exists(config_path('dependencies.php'))) {
-            $definitions = include config_path('dependencies.php');
-            $serverDependencies = array_replace($serverDependencies, $definitions ?? []);
-        }
+        $serverDependencies = $configItems['dependencies'] ?? [];
 
-        $config = static::allocateConfigValue($configFromProviders['annotations'] ?? [], $config);
+        $config = static::allocateConfigValue($configItems['annotations'] ?? [], $config);
 
-        // Load the config/annotations.php and merge the config
-        if (file_exists(config_path('annotations.php'))) {
-            $annotations = include config_path('annotations.php');
-            $config = static::allocateConfigValue($annotations, $config);
+        if ($annotations = $configItems['annotations'] ?? null) {
             $cacheable = value($annotations['scan_cacheable'] ?? $environment == 'production');
         }
 

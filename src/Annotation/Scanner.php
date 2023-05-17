@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace PeibinLaravel\Di\Annotation;
 
 use Illuminate\Filesystem\Filesystem;
-use PeibinLaravel\Di\Contracts\Annotation;
-use PeibinLaravel\Di\Contracts\ScanHandler;
-use PeibinLaravel\Di\Exception\DirectoryNotExistException;
+use PeibinLaravel\Di\Contracts\AnnotationInterface;
+use PeibinLaravel\Di\Contracts\ScanHandlerInterface;
+use PeibinLaravel\Di\Exceptions\DirectoryNotExistException;
 use PeibinLaravel\Di\MetadataCollector;
 use PeibinLaravel\Di\ReflectionManager;
 use ReflectionClass;
@@ -19,10 +19,10 @@ class Scanner
     protected string $path;
 
     /**
-     * @param ScanConfig  $scanConfig
-     * @param ScanHandler $handler
+     * @param ScanConfig           $scanConfig
+     * @param ScanHandlerInterface $handler
      */
-    public function __construct(protected ScanConfig $scanConfig, protected ScanHandler $handler)
+    public function __construct(protected ScanConfig $scanConfig, protected ScanHandlerInterface $handler)
     {
         $this->filesystem = new Filesystem();
         $this->path = base_path('runtime/container/scan.cache');
@@ -91,7 +91,7 @@ class Scanner
         $classAnnotations = $reader->getClassAnnotations($reflection);
         if (!empty($classAnnotations)) {
             foreach ($classAnnotations as $classAnnotation) {
-                if ($classAnnotation instanceof Annotation) {
+                if ($classAnnotation instanceof AnnotationInterface) {
                     $classAnnotation->collectClass($className);
                 }
             }
@@ -103,7 +103,7 @@ class Scanner
             $propertyAnnotations = $reader->getPropertyAnnotations($property);
             if (!empty($propertyAnnotations)) {
                 foreach ($propertyAnnotations as $propertyAnnotation) {
-                    if ($propertyAnnotation instanceof Annotation) {
+                    if ($propertyAnnotation instanceof AnnotationInterface) {
                         $propertyAnnotation->collectProperty($className, $property->getName());
                     }
                 }
@@ -116,7 +116,7 @@ class Scanner
             $methodAnnotations = $reader->getMethodAnnotations($method);
             if (!empty($methodAnnotations)) {
                 foreach ($methodAnnotations as $methodAnnotation) {
-                    if ($methodAnnotation instanceof Annotation) {
+                    if ($methodAnnotation instanceof AnnotationInterface) {
                         $methodAnnotation->collectMethod($className, $method->getName());
                     }
                 }

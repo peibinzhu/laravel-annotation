@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PeibinLaravel\Di\Exception;
+namespace PeibinLaravel\Di\Exceptions;
 
 use Psr\Container\NotFoundExceptionInterface;
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PeibinLaravel\Di\Contracts;
 
-interface Annotation
+interface AnnotationInterface
 {
     /**
      * Collect the annotation metadata to a container that you wants.

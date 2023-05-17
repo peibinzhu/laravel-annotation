@@ -6,7 +6,7 @@ namespace PeibinLaravel\Di\Contracts;
 
 use PeibinLaravel\Di\ScanHandler\Scanned;
 
-interface ScanHandler
+interface ScanHandlerInterface
 {
     public function scan(): Scanned;
 }

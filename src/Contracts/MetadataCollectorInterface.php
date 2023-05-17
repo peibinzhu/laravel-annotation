@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PeibinLaravel\Di\Contracts;
 
-interface MetadataCollector
+interface MetadataCollectorInterface
 {
     /**
      * Retrieve the metadata via key.

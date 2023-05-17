@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace PeibinLaravel\Di;
 
 use Illuminate\Support\Arr;
-use PeibinLaravel\Di\Contracts\MetadataCollector as MetadataCollectorContract;
+use PeibinLaravel\Di\Contracts\MetadataCollectorInterface;
 
-abstract class MetadataCollector implements MetadataCollectorContract
+abstract class MetadataCollector implements MetadataCollectorInterface
 {
     /**
      * Subclass MUST override this property.
